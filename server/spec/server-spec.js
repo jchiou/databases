@@ -95,10 +95,19 @@ describe('Persistent Node Chat Server', function() {
               request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
                 var messageLog = JSON.parse(body);
                 expect(messageLog[0].text).to.equal('Men like you can never change!');
-                done();
+
+                var roomQuery = 'SELECT id_rooms FROM messages WHERE text = ?';
+                var roomArgs = ['Men like you can never change!'];
+                dbConnection.query(roomQuery, roomArgs, function(err, results) {
+                  if (err) { throw err; }
+                  dbConnection.query('SELECT roomname FROM rooms WHERE id = ?', results[0].id_rooms, function(err, results) {
+                    if (err) { throw err; }
+                    expect(results[0].roomname).to.equal('main');
+                    done();
+                  });
+                });
               });
             });
-  
           });
       });
     });
