@@ -27,7 +27,8 @@ PRIMARY KEY (id)
 
 ALTER TABLE messages ADD FOREIGN KEY (id_users) REFERENCES users  ( id );
 ALTER TABLE messages ADD FOREIGN KEY (id_rooms) REFERENCES rooms  ( id );
-
+ALTER TABLE users ADD UNIQUE unique_index (username);
+ALTER TABLE rooms ADD UNIQUE unique_index (roomname);
 
 /*  Execute this file from the command line by typing:
  *    mysql -u root < server/schema.sql

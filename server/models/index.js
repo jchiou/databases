@@ -13,42 +13,24 @@ module.exports = {
         res.send(results);
       });
     }, // a function which produces all the messages
+
     post: function(res, callback, username, message, roomname) {
-      db.query('SELECT id FROM users', [username], function(error, results) {
-        if (error) {
-          throw error;
-        } else {
-          console.log(results);
-          queryRoomID(results[0].id);
-        }
-      });
-
-      var queryRoomID = function(userId) {
-        db.query('SELECT id FROM rooms', [roomname], function(error, results) {
-          if (error) {
-            throw error;
-          } else {
-            if (results.length === 0) {
-              db.query('INSERT INTO rooms SET ?', roomname, function(error, results) {
-                postMessage(userId, results.insertId);
-              });
-            } else {
-              console.log(results);
-              postMessage(userId, results[0].id);
-            }
-          }
-        });
-      };
-
-      var postMessage = function(userId, roomId) {
-        db.query('INSERT INTO messages SET ?', {id_users: userId, id_rooms: roomId, text: message}, function(error, results) {
-          if (error) {
-            throw error;
-          }
-          callback(results);
-          res.send('success');
-        });
-      };
+      db.query('INSERT INTO users SET username=?', [username], function(error, results) {
+        if (error) { console.log(error); }
+        db.query('INSERT INTO rooms SET roomname=?', [roomname], function(error, results) {
+          if (error) { console.log(error); }
+          db.query(`INSERT INTO messages SET 
+                      text = ?,
+                      id_rooms = (SELECT id FROM rooms WHERE roomname = ?),
+                      id_users = (SELECT id FROM users WHERE username = ?)`,
+            [message, roomname, username], 
+            function(error, results) {
+              if (error) { throw error; }
+              callback(results);
+              res.send('success');
+            });
+        }); 
+      }); 
     } // a function which can be used to insert a message into the database
   },
 
