@@ -21,6 +21,7 @@ describe('Persistent Node Chat Server', function() {
     /* Empty the db table before each test so that multiple tests
      * (or repeated runs of the tests) won't screw each other up: */
     dbConnection.query('truncate ' + tablename, done);
+ 
   });
 
   afterEach(function() {
@@ -55,7 +56,6 @@ describe('Persistent Node Chat Server', function() {
         dbConnection.query(queryString, queryArgs, function(err, results) {
           // Should have one result:
           expect(results.length).to.equal(1);
-
           // TODO: If you don't have a column named text, change this test.
           expect(results[0].text).to.equal('In mercy\'s name, three days is all I need.');
 
@@ -67,13 +67,11 @@ describe('Persistent Node Chat Server', function() {
 
   it('Should output all messages from the DB', function(done) {
     dbConnection.query("INSERT INTO users SET username='fred'", function(err, results) {
-     
       dbConnection.query("INSERT INTO rooms SET roomname='main'", function(err, results) {
-        
         dbConnection.query(`INSERT INTO messages SET
                               text = ?,
-                              id_rooms = (SELECT id FROM rooms WHERE roomname = ?),
-                              id_users = (SELECT id FROM users WHERE username = ?)`,
+                              RoomId = (SELECT id FROM rooms WHERE roomname = ?),
+                              UserId = (SELECT id FROM users WHERE username = ?)`,
           ['Men like you can never change!', 'main', 'fred'],
           function(err, results) {
             if (err) {
@@ -96,11 +94,11 @@ describe('Persistent Node Chat Server', function() {
                 var messageLog = JSON.parse(body);
                 expect(messageLog[0].text).to.equal('Men like you can never change!');
 
-                var roomQuery = 'SELECT id_rooms FROM messages WHERE text = ?';
+                var roomQuery = 'SELECT RoomId FROM messages WHERE text = ?';
                 var roomArgs = ['Men like you can never change!'];
                 dbConnection.query(roomQuery, roomArgs, function(err, results) {
                   if (err) { throw err; }
-                  dbConnection.query('SELECT roomname FROM rooms WHERE id = ?', results[0].id_rooms, function(err, results) {
+                  dbConnection.query('SELECT roomname FROM rooms WHERE id = ?', results[0].RoomId, function(err, results) {
                     if (err) { throw err; }
                     expect(results[0].roomname).to.equal('main');
                     done();
